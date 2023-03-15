@@ -1,16 +1,12 @@
+import { StoreApi } from "zustand";
+
 export type Params = Record<string, unknown>;
 
 // ****************************************
 // AppStore Interfaces
 // ****************************************
 
-export interface AppAPI {
-  add: (params: Record<string, any>) => void;
-  remove: (keys: string[]) => void;
-  clearAll: () => void;
-}
-
-export interface AppParams {
+export interface SessionState {
   i18n: string;
   uuid: string;
   phase: number | null;
@@ -23,13 +19,18 @@ export interface AppParams {
   surveyDone?: boolean;
 }
 
-export interface AppState extends AppAPI {
-  params: AppParams;
+export interface SessionAPI {
+  add: (params: Record<string, any>) => void;
+  remove: (keys: string[]) => void;
+  clearAll: () => void;
 }
+
+export type SessionViewModel = SessionAPI & SessionState;
 
 type ExtractState<S> = S extends { getState: () => infer T } ? T : never;
 
 export type SliceSelector<T, U> = (state: ExtractState<T>) => U;
-export type UseAppStoreTuple<T> = [T, AppAPI];
+export type UseSessionStoreTuple<T> = [T, SessionAPI];
 
-export const SELECTOR_IDENTITY = (state: AppState) => state.params;
+export const IDENTITY_SELECTOR = <T>() =>
+  ((state: SessionViewModel): SessionViewModel => state) as unknown as SliceSelector<StoreApi<SessionViewModel>, T>;

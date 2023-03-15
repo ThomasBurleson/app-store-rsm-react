@@ -1,0 +1,3 @@
+{
+  "exportall.config.relExclusion": ["/src/stores/session-store/index.ts"]
+}

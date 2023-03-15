@@ -1,17 +1,17 @@
 import { useCallback } from "react";
 import { Route, Routes } from "react-router-dom";
-import { AppState, AppParams, useAppStore } from "./stores/app-store";
+import { SessionViewModel, useSessionStore } from "./reactive-stores";
 
 import "./styles.css";
 
 /**
- * This UI Component uses `useAppStore()` WITH a selector and gets a slice of
+ * This UI Component uses `useSessionStore()` WITH a selector and gets a slice of
  * AppParams (the i18n) in the Tuple response.
  */
 
 export const WelcomeWithSelector = () => {
-  const selectLanguage = useCallback((state: AppState) => state.params.i18n, []);
-  const [lang, api] = useAppStore<string>(selectLanguage);
+  const selectLanguage = useCallback((state: SessionViewModel) => state.i18n, []);
+  const [lang, api] = useSessionStore<string>(selectLanguage);
   const updateLang = (lang: string) => api.add({ i18n: lang });
 
   return (
@@ -20,8 +20,13 @@ export const WelcomeWithSelector = () => {
       <h2>Store = {JSON.stringify(lang, null, 2)}</h2>
 
       <p>
-        <button onClick={() => updateLang("en")}>Use English</button>
-        <button onClick={() => updateLang("es")}>Use Spanish</button>
+        <button disabled={lang == "en"} onClick={() => updateLang("en")}>
+          Use English
+        </button>
+        <button disabled={lang == "es"} onClick={() => updateLang("es")}>
+          Use Spanish
+        </button>
+        <button onClick={() => api.remove(["surveyDone"])}>Clear SurveyDone</button>
         <button onClick={() => api.clearAll()}>Clear All Params</button>
       </p>
     </>
@@ -37,19 +42,19 @@ export const WelcomeWithSelector = () => {
  *  - <WelcomeWithSelector /> is only watching the AppParams::i18n property
  */
 export const Welcome = () => {
-  const [state, api] = useAppStore<AppParams>();
-  const updateLang = (lang: string) => api.add({ i18n: lang });
+  const [vm] = useSessionStore<SessionViewModel>();
+  const updateLang = (lang: string) => vm.add({ i18n: lang });
 
   return (
     <>
       <h1>All Store Params</h1>
-      <h2>{JSON.stringify(state, null, 2)}</h2>
+      <h2>{JSON.stringify(vm, null, 2)}</h2>
 
       <p>
         <button onClick={() => updateLang("en")}>Use English</button>
         <button onClick={() => updateLang("es")}>Use Spanish</button>
-        <button onClick={() => api.add({ uuid: "33333" })}>Set UUID</button>
-        <button onClick={() => api.clearAll()}>Clear All Params</button>
+        <button onClick={() => vm.add({ uuid: "33333" })}>Set UUID</button>
+        <button onClick={() => vm.clearAll()}>Clear All Params</button>
       </p>
     </>
   );

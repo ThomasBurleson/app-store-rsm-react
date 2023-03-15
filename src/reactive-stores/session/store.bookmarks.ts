@@ -1,5 +1,4 @@
-import { StoreApi } from "zustand";
-import { AppParams, AppState } from "./app-store.interfaces";
+import { SessionState, SessionViewModel } from "./store.model";
 
 /**
  * Utility methods for bidi synchronization of URL query params
@@ -33,9 +32,7 @@ function toKeyVals(searchParams: any, allowedKeys?: string[]) {
 /**
  * Which params in the URL should be used to update the AppStore?
  */
-export function extractQueryParams(
-  location: Location & { state?: any }
-): Record<string, any> {
+export function extractQueryParams(location: Location & { state?: any }): Record<string, any> {
   const { search, state } = location;
   const searchParams = new URLSearchParams(search || "");
   const queryParams = toKeyVals(searchParams, ALLOWED_KEYS);
@@ -52,10 +49,7 @@ export function extractQueryParams(
 /**
  * Which keys in the store should be shown on the URL?
  */
-export function buildQueryParams(
-  storeParams: Record<string, any>,
-  urlParams: Record<string, any>
-): Record<string, any> {
+export function buildQueryParams(storeParams: Record<string, any>, urlParams: Record<string, any>): Record<string, any> {
   // Scan all allowed fields for valid values
   // NOTE: if undefined store value, then remove from URL
   ALLOWED_KEYS.forEach((k: string) => {
@@ -75,19 +69,14 @@ export function buildQueryParams(
  * Gather current values in the store and reflect those
  * to show on the URL for bookmarking
  */
-export function syncStoreToUrl(
-  storeParams: AppParams,
-  history: History,
-  location: Location
-) {
+export function syncStoreToUrl(storeParams: SessionViewModel) {
+  const { history, location } = window;
   if (history && location) {
     const { search, origin, pathname } = location;
-
     const searchParams = new URLSearchParams(search);
     const urlParams = buildQueryParams(storeParams, searchParams);
     const newUrl = `${origin}${pathname}?${urlParams.toString()}`;
 
-    debugger;
     // update the bookmark
     history.replaceState({ path: newUrl }, "", newUrl);
   }
@@ -99,20 +88,13 @@ export function syncStoreToUrl(
  *
  * NOTE: do as the 'store' is being initialized/created
  */
-export function syncUrlToStore(
-  store: any,
-  location: Location
-): StoreApi<AppState> {
-  if (location) {
-    store.setState((state: AppState) => {
-      const params = extractQueryParams(location);
+export function syncUrlToStore(vm: SessionViewModel) {
+  if (window?.location) {
+    const params = extractQueryParams(location);
 
-      const { uuid, phase } = params;
-      if (uuid && phase && state.params.phase !== phase)
-        params.surveyDone = false;
+    const { uuid, phase } = params;
+    if (uuid && phase && vm.phase !== phase) params.surveyDone = false;
 
-      state.params = { ...state.params, ...params };
-    });
+    vm.add(params);
   }
-  return store;
 }
